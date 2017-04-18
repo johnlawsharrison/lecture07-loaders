@@ -7,10 +7,22 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebResourceRequest;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.ImageLoader;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -84,5 +96,37 @@ public class MovieFragment extends Fragment {
         }
 
         //TODO: send request for data from url
+
+        RequestQueue queue = VolleyRequestSingleton.getInstance(getContext()).getRequestQueue();
+        Request movieRequest = new JsonObjectRequest(Request.Method.GET, urlString, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.v(TAG, response.toString());
+                        try {
+                            String posterUrl = response.getString("Poster");
+                            fetchMoviePoster(posterUrl);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                }
+        );
+
+        queue.add(movieRequest);
+    }
+
+    public void fetchMoviePoster(String posterUrl) {
+        // using an image loader from the singleton (caching and stuff)
+        ImageLoader imageLoader = VolleyRequestSingleton.getInstance(getContext()).getImageLoader();
+        // there's a nice default image listener built into the ImageLoader
+        // allows us to specify the view to load the downloaded image into
+        imageLoader.get(posterUrl, ImageLoader.getImageListener(movieImage, 0, 0));
     }
 }

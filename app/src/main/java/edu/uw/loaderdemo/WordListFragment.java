@@ -1,8 +1,12 @@
 package edu.uw.loaderdemo;
 
 
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.os.Bundle;
+import android.provider.UserDictionary;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +23,7 @@ public class WordListFragment extends Fragment {
 
     private static final String TAG = "WordList";
 
-    private ArrayAdapter<String> adapter;
+    private SimpleCursorAdapter adapter;
 
     public WordListFragment() {
         // Required empty public constructor
@@ -37,14 +41,41 @@ public class WordListFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_word_list, container, false);
 
+        //URI
+//        Log.v(TAG, UserDictionary.Words.CONTENT_URI);
+
+        ContentResolver resolver = getActivity().getContentResolver();
+        String[] projection = {UserDictionary.Words.WORD, UserDictionary.Words._ID};
+
+        Cursor cursor = resolver.query(
+                UserDictionary.Words.CONTENT_URI,
+                projection,
+                null, // select (WHERE clause)
+                null, // select args
+                null // sort order
+        );
+
+        cursor.moveToFirst(); // point cursor to first row of results
+        Log.v(TAG, cursor.getString(0)); // "0th" column (WORD in this case)
+
+
         //model
         String[] data = {"Dog","Cat","Android","Inconceivable"};
 
         //controller
         AdapterView listView = (AdapterView)rootView.findViewById(R.id.wordListView);
 
-        adapter = new ArrayAdapter<String>(
-                getActivity(), R.layout.list_item_layout, R.id.txtListItem, data);
+        int[] views = {};
+        adapter = new SimpleCursorAdapter(
+                getActivity(),
+                R.layout.list_item_layout,
+                cursor,
+                new String[] {UserDictionary.Words.WORD},
+                new int[] {R.id.txtListItem},
+                0 // flags
+        );
+//        adapter = new ArrayAdapter<String>(
+//                getActivity(), R.layout.list_item_layout, R.id.txtListItem, data);
         listView.setAdapter(adapter);
 
 
@@ -55,7 +86,7 @@ public class WordListFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 String inputWord = inputText.getText().toString();
-                Log.v(TAG, "To add: "+inputWord);
+                Log.v(TAG, "To add: " + inputWord);
             }
         });
 
